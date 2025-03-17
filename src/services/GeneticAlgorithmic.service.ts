@@ -32,19 +32,20 @@ export class GeneticAlgorithmicService {
 
     public run(): specificPopulation[] {
         for (let i = 0; this.config.interaction > i; i++) {
-            // console.log(`=-=-=-=-=-interaction ${i}=-=-=-=-=-`);
+            console.log(`=-=-=-=-=-interaction ${i}=-=-=-=-=-`);
             this.fitness(this.population);
             this.rankPopulation();
-            const [best, sndbest, ..._] = this.population;
+            const [best, ..._] = this.population;
+            const tournamentWinner = this.tournamentSelection(2);
             const [a, b] = this.crossOver({
                 a: best,
-                b: sndbest
+                b: tournamentWinner
             });
+            this.mutation(a);
+            this.mutation(b);
             this.fitness(
                 [a, b]
             );
-            this.mutation(a);
-            this.mutation(b);
             this.switchWorst({ childA: a, childB: b });
             this.rankPopulation()
             if (this.population.some(a => a.individual.length !== this.config.dataset.pallets.length)) {
@@ -61,8 +62,19 @@ export class GeneticAlgorithmicService {
         this.population[secondLastIndex] = children.childB;
     }
 
+    private tournamentSelection(tournamentSize: number = 3): specificPopulation {
+        // Seleciona aleatoriamente `tournamentSize` indivíduos
+        const tournament = Array.from({ length: tournamentSize }, () =>
+            this.population[Math.floor(Math.random() * this.population.length)]
+        );
+
+        // Retorna o melhor (maior fitness)
+        return tournament.reduce((best, current) => (current.fitness > best.fitness ? current : best));
+    }
+
     private rankPopulation(): void {
         this.population.sort((a, b) => a.fitness - b.fitness);
+        console.log(`best one ${this.population[0].fitness} | `, this.population[0].individual.map(a => { return { m: a.machine.getModel(), p: a.pallet.getId() } }))
     }
 
     private generateIndividual(): specificPopulation {
@@ -85,21 +97,35 @@ export class GeneticAlgorithmicService {
 
     crossOver(parents: { a: specificPopulation, b: specificPopulation }): specificPopulation[] {
         const parentLength = this.config.dataset.pallets.length;
-        const cutPoint = Math.floor(Math.random() * (parentLength - 1)) + 1; // Garante que cutPoint está entre 1 e length-1
+    
+        // Melhor ponto de corte para evitar extremos
+        const cutPoint = Math.floor(parentLength / 3) + Math.floor(Math.random() * (parentLength / 3));
         const aGenes = parents.a.individual.slice(0, cutPoint);
         const bGenes = parents.b.individual.slice(0, cutPoint);
+    
+        // Otimizar a busca por duplicação com um Set
+        const aPallets = new Set(aGenes.map(g => g.pallet));
+        const bPallets = new Set(bGenes.map(g => g.pallet));
+    
         const child1 = [
             ...aGenes,
-            ...parents.b.individual.filter(gene => !aGenes.map(g => g.pallet).includes(gene.pallet))
+            ...parents.b.individual.filter(gene => !aPallets.has(gene.pallet))
         ];
         const child2 = [
             ...bGenes,
-            ...parents.a.individual.filter(gene => !bGenes.map(g => g.pallet).includes(gene.pallet))
+            ...parents.a.individual.filter(gene => !bPallets.has(gene.pallet))
         ];
+    
+        // Garante que ambos os filhos tenham tamanho correto
+        if (child1.length !== parentLength || child2.length !== parentLength) {
+            console.warn("Crossover gerou filhos inválidos, refazendo...");
+            return this.crossOver(parents);
+        }
+    
         return [
             { fitness: 0, individual: child1 },
             { fitness: 0, individual: child2 }
-        ]
+        ];
     }
 
     mutation(child: specificPopulation): void {

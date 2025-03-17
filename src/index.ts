@@ -12,11 +12,9 @@ const machines = [
     new BendMachine('LVD2', 0.2, 0.1)
 ]
 
-
-
 const setupA = new BendSetup(1, 12.22)
 const setupB = new BendSetup(2, 20.42)
-const setupC = new BendSetup(2, 5.42)
+const setupC = new BendSetup(3, 5.42)
 
 
 const itens = [
@@ -49,15 +47,15 @@ const genetic = new GeneticAlgorithmicService({
             new Pallets(1, [itens[0], itens[1]]),
             new Pallets(2, [itens[2]]),
             new Pallets(3, [itens[3]]),
-            new Pallets(4, [itens[0], itens[1]]),
+            new Pallets(4, [itens[0], itens[1], itens[3] , itens[3] ,itens[3] ,itens[3]]),
             new Pallets(5, [itens[0], itens[1]]),
             new Pallets(6, [itens[0], itens[1]]),
         ]
     },
     fitnessFunction: new FitnessMachineAndPallet(),
-    interaction: 2_000,
-    populationSize: 5,
-    mutationRate: 0.3
+    interaction: 1_000,
+    populationSize: 50,
+    mutationRate: 0.1
 })
 
 const result = genetic.run();

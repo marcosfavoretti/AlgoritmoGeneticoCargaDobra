@@ -23,13 +23,21 @@ export class BendMachine extends Machine {
     productionTime(item: Item): number | null {
         return (item.getTimeByOp(this.getOperationTag()) ?? 0) * (1.0 - (this.bendBoost ?? 0));
     }
-
+    
+    /**
+     * 
+     *@description esse metodo ira voltar o valor 0 caso não for preciso de setup
+     */
     checkSetUp(item: Item): number {
         if (this.setup?.getSetUpId() === item.getSetUpDepedency().getSetUpId()) {
             return 0
         }
         this.setSetup(item.getSetUpDepedency());
         return item.getSetUpDepedency().getSetupCost() * (1.0 - (this.setUpBoost ?? 0));
+    }
+
+    getSetup(): BendSetup | undefined {
+        return this.setup;
     }
 
     private setSetup(setup: BendSetup): void {
