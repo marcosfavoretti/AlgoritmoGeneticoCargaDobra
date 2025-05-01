@@ -1,11 +1,15 @@
 export class BendSetup {
-    constructor(private setUpId: number, private costTime: number){}
+    constructor(private setUpId: number, private costTime: number, private removalTime: number) { }
 
-    getSetUpId():number{
+    getSetupRemovalTime(): number {
+        return this.removalTime;
+    }
+
+    getSetUpId(): number {
         return this.setUpId;
     }
 
-    getSetupCost():number{
+    getSetupCost(): number {
         return this.costTime;
     }
 }

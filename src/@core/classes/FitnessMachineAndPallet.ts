@@ -1,20 +1,23 @@
-import { Machine } from "../abstractions/Machine";
+import type { BendMachine, Pallets, Machine } from "../entities/__entities.export.ts";
 import type { IFitnessFunction } from "../interfaces/IFitnessFunction";
-import type { BendMachine } from "./BendMachine";
-import type { Pallets } from "./Pallet";
+
 
 export class FitnessMachineAndPallet implements IFitnessFunction {
-    
+
     execute(population: Array<{ machine: BendMachine; pallet: Pallets; }>): number {
         const parallelMachines = new Map<Machine, number>();
         population.forEach((unit) => {
-            const productionTime = this.calculateLeadTime(unit.machine, unit.pallet);
-            parallelMachines.set(
-                unit.machine,
-                (parallelMachines.get(unit.machine) || 0) + productionTime
-            )
+            const time = this.calculateLeadTime(unit.machine, unit.pallet);
+            this.updateMap(parallelMachines, unit.machine, time);
         });
-        return Math.max(...parallelMachines.values()) ;
+        return Math.max(...parallelMachines.values());
+    }
+
+    private updateMap(map: Map<Machine, number>, machine: Machine, time: number): void {
+        map.set(
+            machine,
+            (map.get(machine) || 0) + time
+        )
     }
 
     private calculateLeadTime(machine: BendMachine, pallet: Pallets): number {

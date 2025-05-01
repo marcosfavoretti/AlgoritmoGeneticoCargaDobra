@@ -1,4 +1,4 @@
-import { Machine } from "../abstractions/Machine";
+import { Machine } from "../abstractions/Machine.ts";
 import { OPERATIONS } from "../enums/OPERATIONS.enum";
 import type { Item } from "./Item";
 import type { BendSetup } from "./Setup";
@@ -32,8 +32,10 @@ export class BendMachine extends Machine {
         if (this.setup?.getSetUpId() === item.getSetUpDepedency().getSetUpId()) {
             return 0
         }
+        const removalCost = this.setup?.getSetupRemovalTime() ?? 0;
         this.setSetup(item.getSetUpDepedency());
-        return item.getSetUpDepedency().getSetupCost() * (1.0 - (this.setUpBoost ?? 0));
+        const setupCost = item.getSetUpDepedency().getSetupCost() * (1.0 - (this.setUpBoost ?? 0));
+        return removalCost + setupCost;
     }
 
     getSetup(): BendSetup | undefined {

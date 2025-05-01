@@ -1,5 +1,5 @@
-import type { BendMachine } from "../@core/classes/BendMachine";
-import type { Pallets } from "../@core/classes/Pallet";
+
+import type { Pallets, BendMachine } from "../@core/entities/__entities.export";
 import type { IFitnessFunction } from "../@core/interfaces/IFitnessFunction";
 
 type algorithmicProps = {
@@ -9,11 +9,11 @@ type algorithmicProps = {
     fitnessFunction: IFitnessFunction;
     mutationRate: number;
 }
-type specificDatasetType = {
+export type specificDatasetType = {
     machines: BendMachine[];
     pallets: Pallets[]
 }
-type specificPopulation = {
+export type specificPopulation = {
     individual: { machine: BendMachine, pallet: Pallets }[];
     fitness: number;
 }
@@ -32,7 +32,6 @@ export class GeneticAlgorithmicService {
 
     public run(): specificPopulation[] {
         for (let i = 0; this.config.interaction > i; i++) {
-            console.log(`=-=-=-=-=-interaction ${i}=-=-=-=-=-`);
             this.fitness(this.population);
             this.rankPopulation();
             const [best, ..._] = this.population;
@@ -50,6 +49,10 @@ export class GeneticAlgorithmicService {
             this.rankPopulation()
             if (this.population.some(a => a.individual.length !== this.config.dataset.pallets.length)) {
                 throw new Error('POPULACAO COM BUG')
+            }
+            if (this.isPopulationConverged()) {
+                console.log('populacao convergiu')
+                return this.population;
             }
         }
         return this.population;
@@ -74,12 +77,13 @@ export class GeneticAlgorithmicService {
 
     private rankPopulation(): void {
         this.population.sort((a, b) => a.fitness - b.fitness);
-        console.log(`best one ${this.population[0].fitness} | `, this.population[0].individual.map(a => { return { m: a.machine.getModel(), p: a.pallet.getId() } }))
+        // console.log(`best one ${this.population[0].fitness} | `, this.population[0].individual.map(a => { return { m: a.machine.getModel(), p: a.pallet.getId() } }))
     }
 
     private generateIndividual(): specificPopulation {
         const input: { machine: BendMachine, pallet: Pallets }[] = [];
         for (const pallet of this.config.dataset.pallets) {
+            // console.log(this.config.dataset.machines)
             const machine = this.config.dataset.machines[
                 Math.floor(Math.random() * this.config.dataset.machines.length)
             ];
@@ -94,19 +98,35 @@ export class GeneticAlgorithmicService {
             target.fitness = result;
         }
     }
+    private isPopulationConverged(): boolean {
+        const similarityThreshold = 0.8;
+        const populationSize = this.population.length;
+
+        const uniqueIndividuals = new Set(
+            this.population.map(individual =>
+                JSON.stringify(individual.individual.map(gene => ({
+                    machine: gene.machine.getModel(),
+                    pallet: gene.pallet.getId()
+                })))
+            )
+        );
+
+        const similarityRatio = (populationSize - uniqueIndividuals.size) / populationSize;
+        return similarityRatio >= similarityThreshold;
+    }
 
     crossOver(parents: { a: specificPopulation, b: specificPopulation }): specificPopulation[] {
         const parentLength = this.config.dataset.pallets.length;
-    
+
         // Melhor ponto de corte para evitar extremos
         const cutPoint = Math.floor(parentLength / 3) + Math.floor(Math.random() * (parentLength / 3));
         const aGenes = parents.a.individual.slice(0, cutPoint);
         const bGenes = parents.b.individual.slice(0, cutPoint);
-    
+
         // Otimizar a busca por duplicação com um Set
         const aPallets = new Set(aGenes.map(g => g.pallet));
         const bPallets = new Set(bGenes.map(g => g.pallet));
-    
+
         const child1 = [
             ...aGenes,
             ...parents.b.individual.filter(gene => !aPallets.has(gene.pallet))
@@ -115,13 +135,13 @@ export class GeneticAlgorithmicService {
             ...bGenes,
             ...parents.a.individual.filter(gene => !bPallets.has(gene.pallet))
         ];
-    
+
         // Garante que ambos os filhos tenham tamanho correto
         if (child1.length !== parentLength || child2.length !== parentLength) {
             console.warn("Crossover gerou filhos inválidos, refazendo...");
             return this.crossOver(parents);
         }
-    
+
         return [
             { fitness: 0, individual: child1 },
             { fitness: 0, individual: child2 }
