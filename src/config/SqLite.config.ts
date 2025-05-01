@@ -1,5 +1,5 @@
 import { DataSource } from "typeorm";
-import { Item, BendMachine, Machine, Operation, Pallets, Setup, ManagerPallets } from "../@core/entities/__entities.export";
+import { Item, BendMachine, Machine, Operation, Pallets, Setup, ManagerPallets } from "../@core/entities";
 import { Tools } from "../@core/entities/Tools.entity";
 
 export class SqLiteConfig {

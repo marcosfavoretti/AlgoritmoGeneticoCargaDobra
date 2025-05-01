@@ -1,8 +1,10 @@
+import type { AlgorithmicInidividual } from "./@core/classes/AlgorithmicIndividual";
 import { FitnessMachineAndPallet } from "./@core/classes/FitnessMachineAndPallet";
-import { Pallets, Machine, BendMachine } from "./@core/entities/__entities.export";
+import { Pallets, Machine, BendMachine } from "./@core/entities";
 import { OPERATIONS } from "./@core/enums/OPERATIONS.enum";
 import { SqLiteConfig } from "./config/SqLite.config"
-import { GeneticAlgorithmicService, type specificPopulation } from "./services/GeneticAlgorithmic.service";
+import { AntColonyService } from "./services/AntColony.service";
+import { GeneticAlgorithmicService } from "./services/GeneticAlgorithmic.service";
 
 export const main = async () => {
     const sqlite = await new SqLiteConfig().connect();
@@ -23,8 +25,8 @@ export const main = async () => {
             }
         }
     });
-    const interaction = 1;
-    let bestresult!: specificPopulation;
+    const interaction = 3;
+    let bestresult!: AlgorithmicInidividual;
     for (let i = 0; interaction > i; i++) {
         const algoritmo = new GeneticAlgorithmicService({
             dataset: {
@@ -33,20 +35,42 @@ export const main = async () => {
             },
             fitnessFunction: new FitnessMachineAndPallet(),
             interaction: 400,
-            populationSize: 5,
+            populationSize: 100,
             mutationRate: 0.5
         })
         const result = algoritmo.run();
+
+        const antes = new AntColonyService({
+            dataset: {
+                machines: machines as BendMachine[],
+                pallets: pallets
+            },
+            fitnessFunction: new FitnessMachineAndPallet(),
+            interaction: 400,
+            populationSize: 100,
+            evaporationRate: 0.1
+        })
+        const result2 = antes.run();
+        const chose = result2.fitness > result.fitness ? result2 : result;
         if (i === 0) {
-            bestresult = result[0];
+            bestresult = chose;
         }
-        bestresult = (result[0].fitness < bestresult.fitness ? result[0] : bestresult);
+        bestresult = (chose.fitness < bestresult.fitness ? chose : bestresult);
     }
-    console.log(`Top result:`);
-    console.dir({
-        ind: bestresult.individual.map(b => { return { pallet: b.pallet.getId(), machine: b.machine.getModel() } }), fit: bestresult.fitness
-    }, { depth: 4 });
-    
+
+    console.log('melhor resultado');
+    console.dir(bestresult.fitness, { depth: 1 })
+
+    // console.log(`Top result:`);
+    // console.log('genetic')
+    // console.dir({
+    //     ind: result.individual.map(b => { return { pallet: b.pallet.getId(), machine: b.machine.getModel() } })
+    // }, { depth: 4 });
+    // console.log('formigas')
+    // console.dir({
+    //     ind: bestResult[0].individual.map(b => { return { pallet: b.pallet.getId(), machine: b.machine.getModel() } })
+    // }, { depth: 4 });
+
     return bestresult;
 }
 

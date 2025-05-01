@@ -1,4 +1,4 @@
-import type { BendMachine, Pallets, Machine } from "../entities/__entities.export.ts";
+import type { BendMachine, Pallets, Machine } from "../entities/index.ts";
 import type { IFitnessFunction } from "../interfaces/IFitnessFunction";
 
 

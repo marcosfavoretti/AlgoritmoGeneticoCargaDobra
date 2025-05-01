@@ -1,4 +1,4 @@
-import type { BendMachine, Pallets } from "../entities/__entities.export";
+import type { BendMachine, Pallets } from "../entities";
 
 
 export interface IFitnessFunction {

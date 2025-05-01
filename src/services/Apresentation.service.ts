@@ -1,13 +1,16 @@
 import { compile } from "handlebars";
 import { main } from "..";
-import type {  Pallets } from "../@core/entities/__entities.export";
+import type { Pallets } from "../@core/entities";
 import * as path from 'path'
-import type { specificPopulation } from "./GeneticAlgorithmic.service";
+import type { AlgorithmicInidividual } from "../@core/classes/AlgorithmicIndividual";
+import { FindBestCombinationUseCase } from "../@core/application/FindBestCombination.usecase";
+
+const combinationsUsecase = new FindBestCombinationUseCase();
 
 export async function apresentationService(): Promise<string> {
-    const bestResult = await main();
+    const bestResult = await combinationsUsecase.execute();
 
-    const reduceFn = (bestIndividual: specificPopulation): Map<string, Array<Pallets>> => {
+    const reduceFn = (bestIndividual: AlgorithmicInidividual): Map<string, Array<Pallets>> => {
         const map = new Map<string, Array<Pallets>>();
         for (const unit of bestIndividual.individual) {
             if (!map.has(unit.machine.getModel())) {

@@ -1,129 +1,130 @@
+import type { AlgorithmicInidividual } from "../@core/classes/AlgorithmicIndividual";
+import type { GeneticAlgorithConfig } from "../@core/classes/GeneticAlgorithConfig";
+import type { Pallets, BendMachine } from "../@core/entities";
+import type { IHeuristicSolution } from "../@core/interfaces/IHeuristicSolution";
 
-import type { Pallets, BendMachine } from "../@core/entities/__entities.export";
-import type { IFitnessFunction } from "../@core/interfaces/IFitnessFunction";
+export class GeneticAlgorithmicService implements IHeuristicSolution {
 
-type algorithmicProps = {
-    interaction: number;
-    populationSize: number;
-    dataset: specificDatasetType;
-    fitnessFunction: IFitnessFunction;
-    mutationRate: number;
-}
-export type specificDatasetType = {
-    machines: BendMachine[];
-    pallets: Pallets[]
-}
-export type specificPopulation = {
-    individual: { machine: BendMachine, pallet: Pallets }[];
-    fitness: number;
-}
-export class GeneticAlgorithmicService {
-
-    private population: specificPopulation[] = [];
+    private population: AlgorithmicInidividual[] = [];
+    private readonly debug = false;
+    private readonly maxCrossoverRetries = 5;
 
     constructor(
-        private config: algorithmicProps
+        private config: GeneticAlgorithConfig
     ) {
-        this.population = Array(this.config.populationSize)
-            .fill(null)
-            .map(() => this.generateIndividual());
-        console.log('population generated');
+        this.population = Array.from({ length: this.config.populationSize }, () => this.generateIndividual());
     }
 
-    public run(): specificPopulation[] {
-        for (let i = 0; this.config.interaction > i; i++) {
+    public run(): AlgorithmicInidividual {
+        for (let i = 0; i < this.config.interaction; i++) {
             this.fitness(this.population);
             this.rankPopulation();
-            const [best, ..._] = this.population;
+
+            const [best] = this.population;
             const tournamentWinner = this.tournamentSelection(2);
-            const [a, b] = this.crossOver({
-                a: best,
-                b: tournamentWinner
-            });
+            const [a, b] = this.crossOverSafe({ a: best, b: tournamentWinner });
+
             this.mutation(a);
             this.mutation(b);
-            this.fitness(
-                [a, b]
-            );
+
+            this.fitness([a, b]);
             this.switchWorst({ childA: a, childB: b });
-            this.rankPopulation()
-            if (this.population.some(a => a.individual.length !== this.config.dataset.pallets.length)) {
-                throw new Error('POPULACAO COM BUG')
+
+            this.rankPopulation();
+
+            if (!this.population.every(this.isIndividualValid.bind(this))) {
+                throw new Error("POPULAÇÃO COM BUG");
             }
-            if (this.isPopulationConverged()) {
-                console.log('populacao convergiu')
-                return this.population;
+
+            // if (this.isPopulationConverged()) {
+            //     return this.population[0];
+            // }
+
+            if (this.debug) {
+                console.log(`Iteração ${i}: Best fitness = ${this.population[0].fitness}`);
             }
         }
-        return this.population;
+
+        return this.population[0];
     }
 
-    private switchWorst(children: { childA: specificPopulation, childB: specificPopulation }): void {
+    private switchWorst(children: { childA: AlgorithmicInidividual, childB: AlgorithmicInidividual }): void {
         const lastIndex = this.population.length - 1;
         const secondLastIndex = this.population.length - 2;
         this.population[lastIndex] = children.childA;
         this.population[secondLastIndex] = children.childB;
     }
 
-    private tournamentSelection(tournamentSize: number = 3): specificPopulation {
-        // Seleciona aleatoriamente `tournamentSize` indivíduos
+    private tournamentSelection(tournamentSize: number = 3): AlgorithmicInidividual {
         const tournament = Array.from({ length: tournamentSize }, () =>
             this.population[Math.floor(Math.random() * this.population.length)]
         );
-
-        // Retorna o melhor (maior fitness)
         return tournament.reduce((best, current) => (current.fitness > best.fitness ? current : best));
     }
 
     private rankPopulation(): void {
         this.population.sort((a, b) => a.fitness - b.fitness);
-        // console.log(`best one ${this.population[0].fitness} | `, this.population[0].individual.map(a => { return { m: a.machine.getModel(), p: a.pallet.getId() } }))
     }
 
-    private generateIndividual(): specificPopulation {
+    private generateIndividual(): AlgorithmicInidividual {
         const input: { machine: BendMachine, pallet: Pallets }[] = [];
+
         for (const pallet of this.config.dataset.pallets) {
-            // console.log(this.config.dataset.machines)
             const machine = this.config.dataset.machines[
                 Math.floor(Math.random() * this.config.dataset.machines.length)
             ];
             input.push({ machine, pallet });
         }
+
         return { individual: input, fitness: 0 };
     }
 
-    private fitness(targets: specificPopulation[]): void {
+    private fitness(targets: AlgorithmicInidividual[]): void {
         for (const target of targets) {
             const result = this.config.fitnessFunction.execute(target.individual);
             target.fitness = result;
         }
     }
+
     private isPopulationConverged(): boolean {
         const similarityThreshold = 0.8;
         const populationSize = this.population.length;
 
-        const uniqueIndividuals = new Set(
-            this.population.map(individual =>
-                JSON.stringify(individual.individual.map(gene => ({
-                    machine: gene.machine.getModel(),
-                    pallet: gene.pallet.getId()
-                })))
-            )
+        const uniqueHashes = new Set(
+            this.population.map(ind => this.hashIndividual(ind))
         );
 
-        const similarityRatio = (populationSize - uniqueIndividuals.size) / populationSize;
+        const similarityRatio = (populationSize - uniqueHashes.size) / populationSize;
         return similarityRatio >= similarityThreshold;
     }
 
-    crossOver(parents: { a: specificPopulation, b: specificPopulation }): specificPopulation[] {
-        const parentLength = this.config.dataset.pallets.length;
+    private hashIndividual(ind: AlgorithmicInidividual): string {
+        return ind.individual
+            .map(g => `${g.machine.getModel()}-${g.pallet.getId()}`)
+            .join('|');
+    }
 
-        // Melhor ponto de corte para evitar extremos
+    private isIndividualValid(ind: AlgorithmicInidividual): boolean {
+        return ind.individual.length === this.config.dataset.pallets.length;
+    }
+
+    private crossOverSafe(parents: { a: AlgorithmicInidividual, b: AlgorithmicInidividual }): AlgorithmicInidividual[] {
+        for (let i = 0; i < this.maxCrossoverRetries; i++) {
+            const [child1, child2] = this.crossOver(parents);
+            if (this.isIndividualValid(child1) && this.isIndividualValid(child2)) {
+                return [child1, child2];
+            }
+        }
+        throw new Error("Falha ao gerar filhos válidos após várias tentativas");
+    }
+
+    private crossOver(parents: { a: AlgorithmicInidividual, b: AlgorithmicInidividual }): AlgorithmicInidividual[] {
+        const parentLength = this.config.dataset.pallets.length;
         const cutPoint = Math.floor(parentLength / 3) + Math.floor(Math.random() * (parentLength / 3));
+
         const aGenes = parents.a.individual.slice(0, cutPoint);
         const bGenes = parents.b.individual.slice(0, cutPoint);
 
-        // Otimizar a busca por duplicação com um Set
         const aPallets = new Set(aGenes.map(g => g.pallet));
         const bPallets = new Set(bGenes.map(g => g.pallet));
 
@@ -136,28 +137,27 @@ export class GeneticAlgorithmicService {
             ...parents.a.individual.filter(gene => !bPallets.has(gene.pallet))
         ];
 
-        // Garante que ambos os filhos tenham tamanho correto
-        if (child1.length !== parentLength || child2.length !== parentLength) {
-            console.warn("Crossover gerou filhos inválidos, refazendo...");
-            return this.crossOver(parents);
-        }
-
         return [
             { fitness: 0, individual: child1 },
             { fitness: 0, individual: child2 }
         ];
     }
 
-    mutation(child: specificPopulation): void {
+    private mutation(child: AlgorithmicInidividual): void {
         const indiceA = Math.floor(Math.random() * child.individual.length);
         const indiceB = Math.floor(Math.random() * child.individual.length);
         const indiceC = Math.floor(Math.random() * child.individual.length);
-        // console.log('indices para mutacao', indiceA, indiceB);
+
         if (Math.random() < this.config.mutationRate) {
-            [child.individual[indiceB], child.individual[indiceA]] = [child.individual[indiceA], child.individual[indiceB]];
+            // swap de pallets
+            [child.individual[indiceA], child.individual[indiceB]] = [child.individual[indiceB], child.individual[indiceA]];
         }
-        // 10% chance to mutate the machine
-        // child.individual[indiceC].machine = this.config.dataset.machines[Math.floor(Math.random() * this.config.dataset.machines.length)];
+
+        // mutação de máquina
+        if (Math.random() < 0.1) {
+            const newMachine = this.config.dataset.machines[Math.floor(Math.random() * this.config.dataset.machines.length)];
+            child.individual[indiceC].machine = newMachine;
+        }
     }
 
 }

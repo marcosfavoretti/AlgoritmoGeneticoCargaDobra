@@ -2,7 +2,7 @@ import express from "express";
 import { apresentationService } from "./services/Apresentation.service";
 
 const app = express();
-const port = 3000;
+const port = 3002;
 
 app.get("/", async (_req: express.Request, res: express.Response) => {
     // Dados para o template
