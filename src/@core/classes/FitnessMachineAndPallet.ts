@@ -24,7 +24,7 @@ export class FitnessMachineAndPallet implements IFitnessFunction {
         const itens = pallet.getItensWithPreference(machine.getSetup()?.getSetUpId());
         return itens.reduce((total, item) => {
             const setUpCost = machine.checkSetUp(item);
-            return total + machine.productionTime(item)! + setUpCost
+            return total + (machine.productionTime(item)!*pallet.currentLote) + setUpCost
         }, 0);
     }
 }

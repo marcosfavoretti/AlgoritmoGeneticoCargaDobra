@@ -17,6 +17,7 @@ export class Pallets {
 
     private setupOptmize!: { [key: number]: Item[] };
 
+    public currentLote : number = 1;
 
     getId(): number {
         return this.palletsId;

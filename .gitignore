@@ -2,6 +2,8 @@
 
 # Logs
 src/export.script.ts
+src/setup.export.txt
+src/index.dev.2.ts
 
 logs
 _.log

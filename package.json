@@ -2,6 +2,10 @@
   "name": "dobraalgoritmogenetico",
   "module": "index.ts",
   "type": "module",
+  "scripts": {
+    "sever": "bun run src/sever.ts",
+    "start": "bun run src/index.ts"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   },
