@@ -16,6 +16,7 @@ export class GeneticAlgorithmicService implements IHeuristicSolution {
     }
 
     public run(): AlgorithmicInidividual {
+        console.time('GENETIC')
         for (let i = 0; i < this.config.interaction; i++) {
             this.fitness(this.population);
             this.rankPopulation();
@@ -44,6 +45,7 @@ export class GeneticAlgorithmicService implements IHeuristicSolution {
                 console.log(`Iteração ${i}: Best fitness = ${this.population[0].fitness}`);
             }
         }
+        console.timeEnd('GENETIC')
 
         return this.population[0];
     }
@@ -107,15 +109,29 @@ export class GeneticAlgorithmicService implements IHeuristicSolution {
     private isIndividualValid(ind: AlgorithmicInidividual): boolean {
         return ind.individual.length === this.config.dataset.pallets.length;
     }
-
     private crossOverSafe(parents: { a: AlgorithmicInidividual, b: AlgorithmicInidividual }): AlgorithmicInidividual[] {
+        let lastValid: AlgorithmicInidividual[] | null = null;
+
         for (let i = 0; i < this.maxCrossoverRetries; i++) {
             const [child1, child2] = this.crossOver(parents);
-            if (this.isIndividualValid(child1) && this.isIndividualValid(child2)) {
+
+            const valid1 = this.isIndividualValid(child1);
+            const valid2 = this.isIndividualValid(child2);
+
+            if (valid1 && valid2) {
                 return [child1, child2];
             }
+            if (valid1 || valid2) {
+                lastValid = [
+                    valid1 ? child1 : this.generateIndividual(),
+                    valid2 ? child2 : this.generateIndividual()
+                ];
+            }
         }
-        throw new Error("Falha ao gerar filhos válidos após várias tentativas");
+        if (lastValid) {
+            return lastValid;
+        }
+        return [this.generateIndividual(), this.generateIndividual()];
     }
 
     private crossOver(parents: { a: AlgorithmicInidividual, b: AlgorithmicInidividual }): AlgorithmicInidividual[] {

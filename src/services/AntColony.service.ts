@@ -13,6 +13,7 @@ export class AntColonyService implements IHeuristicSolution {
     }
 
     public run(): AlgorithmicInidividual {
+        console.time('ANT COLONY')
         let bestSolution: AlgorithmicInidividual | null = null;
 
         for (let iter = 0; iter < this.config.interaction; iter++) {
@@ -31,13 +32,8 @@ export class AntColonyService implements IHeuristicSolution {
             if (!bestSolution || localBest.fitness < bestSolution.fitness) {
                 bestSolution = localBest;
             }
-
-            // Critério de parada opcional
-            // if (this.isConverged(ants)) {
-            //     break;
-            // };
         }
-        
+        console.timeEnd('ANT COLONY')
         return bestSolution! ;
     }
 

@@ -1,10 +1,10 @@
-import { SqLiteConfig } from "../../config/SqLite.config";
-import { AntColonyService } from "../../services/AntColony.service";
-import { GeneticAlgorithmicService } from "../../services/GeneticAlgorithmic.service";
-import type { AlgorithmicInidividual } from "../classes/AlgorithmicIndividual";
-import { FitnessMachineAndPallet } from "../classes/FitnessMachineAndPallet";
-import { BendMachine, Machine, Pallets } from "../entities";
-import { OPERATIONS } from "../enums/OPERATIONS.enum";
+import { SqLiteConfig } from "../config/SqLite.config";
+import { AntColonyService } from "../services/AntColony.service";
+import { GeneticAlgorithmicService } from "../services/GeneticAlgorithmic.service";
+import type { AlgorithmicInidividual } from "../@core/classes/AlgorithmicIndividual";
+import { FitnessMachineAndPallet } from "../@core/classes/FitnessMachineAndPallet";
+import { BendMachine, Machine, Pallets } from "../@core/entities";
+import { OPERATIONS } from "../@core/enums/OPERATIONS.enum";
 
 export class FindBestCombinationUseCase {
     private readonly globalIteraction: number = 20;
@@ -31,7 +31,7 @@ export class FindBestCombinationUseCase {
         });
 
         for (const _ of Array(this.globalIteraction)) {
-            const [resul1, result2] = await Promise.all([
+            const [result1, result2] = await Promise.all([
                 new GeneticAlgorithmicService({
                     dataset: {
                         machines: machines as BendMachine[],
@@ -56,17 +56,20 @@ export class FindBestCombinationUseCase {
             ]);
             let bestInItenraction: AlgorithmicInidividual;
             let algoritmorespose: string = '';
-            if (resul1.fitness < result2.fitness) {
-                bestInItenraction = resul1;
-                algoritmorespose = 'genetic'
+            console.log(`Responsta do Algoritmo AG ${result1.fitness}`)
+            console.log(`Responsta do Algoritmo ACO ${result2.fitness}`)
+
+            if (result1.fitness < result2.fitness) {
+                bestInItenraction = result1;
+                algoritmorespose = 'AG'
             }
             else {
                 bestInItenraction = result2;
-                algoritmorespose = 'formiga'
+                algoritmorespose = 'ACO'
             }
-            if((this.bestIndividual?.fitness ?? Infinity) > bestInItenraction.fitness){
+            if ((this.bestIndividual?.fitness ?? Infinity) > bestInItenraction.fitness) {
                 this.bestIndividual = bestInItenraction;
-                console.log(algoritmorespose, 'ta como melhor com o fitness', this.bestIndividual.fitness);
+                console.log(algoritmorespose, 'venceu essa rodada', this.bestIndividual.fitness.toFixed(4));
             }
         }
         return this.bestIndividual!;

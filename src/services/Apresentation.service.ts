@@ -3,7 +3,7 @@ import { main } from "..";
 import type { Pallets } from "../@core/entities";
 import * as path from 'path'
 import type { AlgorithmicInidividual } from "../@core/classes/AlgorithmicIndividual";
-import { FindBestCombinationUseCase } from "../@core/application/FindBestCombination.usecase";
+import { FindBestCombinationUseCase } from "../application/FindBestCombination.usecase";
 
 const combinationsUsecase = new FindBestCombinationUseCase();
 

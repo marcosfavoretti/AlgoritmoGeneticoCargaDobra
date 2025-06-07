@@ -4,6 +4,9 @@
 src/export.script.ts
 src/setup.export.txt
 src/index.dev.2.ts
+setup.export.txt
+index.ts
+
 
 logs
 _.log
