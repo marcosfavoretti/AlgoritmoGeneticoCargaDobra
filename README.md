@@ -50,15 +50,31 @@ Para rodar a aplicação, siga os passos abaixo:
     bun install
     ```
 
-4.  **Iniciar o Serviço REST:**
-    Para levantar o serviço que irá expor a interface web e executar os algoritmos, utilize o seguinte comando na raiz do projeto:
-    ```bash
-    bun src/server.ts
-    ```
-    Isso iniciará um serviço REST na porta `3002` local.
+# 4. **Iniciar o Serviço**
 
-5.  **Acessar a Interface Web:**
+## 👉 API REST
+
+Para iniciar o serviço que expõe a interface web e executa os algoritmos, utilize o seguinte comando na raiz do projeto:
+
+\`\`\`bash
+bun src/server.ts
+\`\`\`
+
+Isso iniciará um servidor REST local na porta \`3002\` por padrão. Você poderá acessar a interface em:  
+[http://localhost:3002](http://localhost:3002)
+
+>  **Acessar a Interface Web:**
     Abra seu navegador e acesse `http://localhost:3002`. Ao acessar essa URL, os algoritmos serão executados internamente com os dados de teste pré-configurados, e a solução otimizada será exibida na interface.
+---
+
+## 👉 CLI
+
+Como alternativa, você pode executar o serviço via linha de comando. As respostas serão exibidas diretamente no terminal:
+
+\`\`\`bash
+npm run server
+\`\`\`
+
 
 ### Parâmetros dos Algoritmos
 
