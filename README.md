@@ -41,8 +41,8 @@ Para rodar a aplicação, siga os passos abaixo:
 
 2.  **Clonar o Repositório:**
     ```bash
-    git clone [URL_DO_SEU_REPOSITORIO]
-    cd [nome_do_seu_repositorio]
+    git clone https://github.com/marcosfavoretti/AlgoritmoGeneticoCargaDobra.git
+    cd AlgoritmoGeneticoCargaDobra
     ```
 
 3.  **Instalar Dependências:**
@@ -56,9 +56,9 @@ Para rodar a aplicação, siga os passos abaixo:
 
 Para iniciar o serviço que expõe a interface web e executa os algoritmos, utilize o seguinte comando na raiz do projeto:
 
-\`\`\`bash
+```bash
 bun src/server.ts
-\`\`\`
+```
 
 Isso iniciará um servidor REST local na porta \`3002\` por padrão. Você poderá acessar a interface em:  
 [http://localhost:3002](http://localhost:3002)
@@ -71,9 +71,9 @@ Isso iniciará um servidor REST local na porta \`3002\` por padrão. Você poder
 
 Como alternativa, você pode executar o serviço via linha de comando. As respostas serão exibidas diretamente no terminal:
 
-\`\`\`bash
+```bash
 npm run server
-\`\`\`
+```
 
 
 ### Parâmetros dos Algoritmos
