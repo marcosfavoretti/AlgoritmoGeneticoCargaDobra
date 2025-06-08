@@ -5,9 +5,10 @@ import type { AlgorithmicInidividual } from "../@core/classes/AlgorithmicIndivid
 import { FitnessMachineAndPallet } from "../@core/classes/FitnessMachineAndPallet";
 import { BendMachine, Machine, Pallets } from "../@core/entities";
 import { OPERATIONS } from "../@core/enums/OPERATIONS.enum";
+import { ExhaustiveSearchService } from "../services/ExhaustiveSearch.service";
 
 export class FindBestCombinationUseCase {
-    private readonly globalIteraction: number = 20;
+    private readonly globalIteraction: number = 5;
     private bestIndividual?: AlgorithmicInidividual;
 
     async execute(): Promise<AlgorithmicInidividual> {
@@ -17,7 +18,7 @@ export class FindBestCombinationUseCase {
                 operation: OPERATIONS.DOBRA
             }
         })
-        const pallets = await sqlite.getRepository(Pallets).find({
+        let pallets = await sqlite.getRepository(Pallets).find({
             relations: {
                 managerPallets: {
                     item: {
@@ -29,7 +30,20 @@ export class FindBestCombinationUseCase {
                 }
             }
         });
+        // pallets = pallets.slice(0, 7);
+        // const result3 = new ExhaustiveSearchService(
+        //     {
+        //         dataset: {
+        //             machines: machines as BendMachine[],
+        //             pallets: pallets
+        //         },
+        //         fitnessFunction: new FitnessMachineAndPallet(),
+        //         interaction: 100,
+        //         populationSize: 50,
+        //         mutationRate: 0.3
+        //     }
 
+        // ).run();
         for (const _ of Array(this.globalIteraction)) {
             const [result1, result2] = await Promise.all([
                 new GeneticAlgorithmicService({
@@ -52,8 +66,9 @@ export class FindBestCombinationUseCase {
                     interaction: 100,
                     populationSize: 50,
                     evaporationRate: 0.1
-                }).run()
+                }).run(),
             ]);
+
             let bestInItenraction: AlgorithmicInidividual;
             let algoritmorespose: string = '';
             console.log(`Responsta do Algoritmo AG ${result1.fitness}`)
@@ -72,6 +87,7 @@ export class FindBestCombinationUseCase {
                 console.log(algoritmorespose, 'venceu essa rodada', this.bestIndividual.fitness.toFixed(4));
             }
         }
+        // console.log(`Responsta do Algoritmo Força bruta ${result3.fitness}`)
         return this.bestIndividual!;
     }
 }

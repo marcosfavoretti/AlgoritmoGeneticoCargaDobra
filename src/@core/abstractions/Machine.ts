@@ -1,4 +1,4 @@
-import type { Item } from "../classes/Item";
+import type { Item } from "../entities";
 import type { OPERATIONS } from "../enums/OPERATIONS.enum";
 
 export abstract class Machine {
